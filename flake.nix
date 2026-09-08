@@ -99,6 +99,7 @@
               pip
               ipykernel
               notebook
+              seaborn
             ])
             ++ [
               pkgs.pandoc
