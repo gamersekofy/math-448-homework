@@ -50,6 +50,11 @@
           ];
 
         python = pkgs."python${concatMajorMinor version}";
+
+        islp = pkgs.callPackage ./islp.nix {
+          pythonPackages = python.pkgs;
+        };
+
         latex = pkgs.texliveSmall.withPackages (
           ps:
             with ps; [
@@ -98,6 +103,7 @@
             ++ [
               pkgs.pandoc
               latex
+              islp
               self.formatter.${system}
             ];
         };
