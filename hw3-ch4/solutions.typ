@@ -71,7 +71,7 @@
 // ============== title block ==============
 #align(center)[
   #v(0.3em)
-  #text(size: 17pt, weight: "bold")[Chapter 4: Statistical Learning]
+  #text(size: 17pt, weight: "bold")[Chapter 4: Classification]
   #v(0.35em)
   #text(size: 11pt)[MATH 448: Statistical Learning — Problems 3, 6, 13, 15]
   #v(1.0em)
@@ -109,13 +109,13 @@ Taking logarithms and dropping terms that do not depend on the class (the consta
 $ delta_k (x) &= log pi_k - log sigma_k - (x - mu_k)^2/(2 sigma_k^2) \
               &= -x^2/(2 sigma_k^2) + (mu_k/sigma_k^2) x - mu_k^2/(2 sigma_k^2) - log sigma_k + log pi_k. $
 
-Observe that $delta_k (x)$ is a *quadratic function of $x$*: the coefficient of $x^2$, namely $-1\/(2 sigma_k^2)$, depends on the class. Only when $sigma_k^2$ does not depend on $k$ is $delta_k$ linear in $x$.
+Observe that $delta_k (x)$ is a *quadratic function of $x$*: the coefficient of $x^2$, namely $-1\/(2 sigma_k^2)$, depends on the class. Only when $sigma_k^2$ does not depend on $k$ does the $x^2$ term become common to all classes and cancel from $delta_k - delta_l$, so the decision *boundary* is linear; $delta_k$ itself remains quadratic.
 
 *The boundary solves a quadratic equation.* The Bayes decision rule switches from class $k$ to class $l$ exactly where the posteriors tie, i.e. where $delta_k (x) = delta_l (x)$. Writing out the equality,
 $ log pi_k - log sigma_k - (x - mu_k)^2/(2 sigma_k^2) = log pi_l - log sigma_l - (x - mu_l)^2/(2 sigma_l^2), $
 then expanding the squares and collecting powers of $x$,
 $ 0 &= underbrace(1/2 (1/sigma_k^2 - 1/sigma_l^2), A) x^2 + underbrace(mu_l/sigma_l^2 - mu_k/sigma_k^2, B) x \
-    & quad + underbrace(mu_k^2/(2 sigma_k^2) - mu_l^2/(2 sigma_l^2) + log((pi_k sigma_l)/(pi_l sigma_k)), C). dot $
+    & quad + underbrace(mu_k^2/(2 sigma_k^2) - mu_l^2/(2 sigma_l^2) - log((pi_k sigma_l)/(pi_l sigma_k)), C). dot $
 
 This is a *quadratic equation in $x$*, $A x^2 + B x + C = 0$, whose leading coefficient
 $ A = 1/2 (1/sigma_k^2 - 1/sigma_l^2) $
@@ -130,7 +130,7 @@ Hence for the QDA model with $p = 1$, log-posterior ratios are quadratic functio
   caption: [
     Illustration for $p = 1$, $K = 2$, equal priors $pi_1 = pi_2 = 0.5$, showing the log-posteriors $delta_k (x)$.
     *Left:* equal variances (LDA-like): one linear boundary at $x = 0$.
-    *Right:* class-specific variances $sigma_1^2 = 1$, $sigma_2^2 = 4$ (QDA): the boundaries are the two dashed lines $x approx -4.92$ and $x approx -0.08$, the roots of $delta_1 - delta_2 = 0.375 x^2 + 1.875 x + 0.1506 = 0$. `solutions.py` verifies numerically that $delta_1 - delta_2$ vanishes at these two roots to machine precision.
+    *Right:* class-specific variances $sigma_1^2 = 1$, $sigma_2^2 = 4$ (QDA): the boundaries are the two dashed lines $x approx -4.92$ and $x approx -0.08$, the roots of $0.375 x^2 + 1.875 x + 0.1506 = 0$ (equivalently, $delta_1 - delta_2 = 0$). `solutions.py` prints the residual and asserts that $delta_1 - delta_2$ vanishes at these two roots to machine precision.
   ],
 ) <fig-q3>
 
@@ -200,7 +200,7 @@ Summary statistics (lag variables and `Today` in percent, `Volume` in billions o
 
 *Patterns.*
 
-+ *Volume grows over time:* mean weekly volume rises from roughly 0.15 shares (1990) to a plateau above 1–2 by the mid-2000s, peaking around the 2008 crisis, and falls afterwards. This agrees with the strong `Year`–`Volume` correlation of $r = 0.84$, and the growth looks roughly exponential up to 2008.
++ *Volume grows over time:* mean weekly volume rises from roughly 0.15 billion shares (1990) to about 1.0 by 2000 and 5.0–5.6 by 2008–2009, then falls to 4.6 in 2010. This agrees with the strong `Year`–`Volume` correlation of $r = 0.84$, and the growth looks roughly exponential up to 2008–2009.
 + *The lag variables are essentially mutually uncorrelated* (all $|r| <= 0.09$), so multicollinearity among lags is negligible, and the plots show no visible structure among the five lags.
 + *Weak univariate signal:* boxplots of each lag by `Direction` overlap almost fully; e.g. the median of `Lag1` is shifted by only a fraction of a percentage point between Down and Up weeks. Any classifier built only on the lags is therefore expected to hover close to the 55.6% "always Up" baseline.
 + `Direction` is essentially the sign of `Today`, so `Today` separates the classes almost perfectly in the boxplot — but `Today` is not available at prediction time and is excluded from every fitted model.
@@ -243,7 +243,7 @@ Predicting on the training data (fitted probability > 0.5 → "Up"):
   [
     *Training fraction correct:* 611 / 1089 = *#pct(cmc.at("frac"), d: 2)* — barely above the 55.6% "always Up" baseline.
 
-    *Types of mistakes:* the classifier is extremely lopsided. Of its 1089 predictions, only 54 + 48 = 102 are Down; it correctly flags just 54 of the 484 true Down weeks (#pct(cmc.at("down_correct_rate"), d: 1)) while its Up predictions are right on 557 of 605 weeks (#pct(cmc.at("up_correct_rate"), d: 1)). The dominant error is a *false positive for Up*: the market is predicted to go Up when it actually goes Down (430 such weeks), versus only 48 of the opposite type. The fitted probabilities hover so close to 0.5 that the rule almost always crosses the 0.5 threshold in the same direction, so logistic regression here behaves like an "always Up" classifier and misses almost every down week.
+    *Types of mistakes:* the classifier is extremely lopsided. Of its 1089 predictions, only 54 + 48 = 102 are Down; it correctly flags just 54 of the 484 true Down weeks (#pct(cmc.at("down_correct_rate"), d: 1)) while its Up predictions are right on 557 of 605 weeks (#pct(cmc.at("up_correct_rate"), d: 1)). The dominant error is a *false positive for Up*: the market is predicted to go Up when it actually goes Down (430 such weeks), versus only 48 of the opposite type. Most fitted probabilities sit just above 0.5, so the 0.5 rule predicts Up for 987 of the 1089 weeks, and logistic regression here behaves like an "always Up" classifier and misses almost every down week.
   ],
 )
 
@@ -270,10 +270,10 @@ Each method is trained on 1990–2008 with `Lag2` as the sole predictor; test ac
 ) <tbl-q13dh>
 
 Part (d) — *logistic regression:* 65/104 = *62.5%* correct; it catches 9 of 43 true Down weeks (matrix row 1) and 56 of 61 true Up weeks.
-Part (e) — *LDA:* identical to logistic regression here, 65/104 = *62.5%* — with a single predictor and priors near 0.5 the two posteriors coincide; the confusion matrix is exactly the same.
-Part (f) — *QDA:* 61/104 = *58.65%*; its fitted variances/priors are close enough to equal that it predicts Up for *all 104* test weeks (matrix [[0, 43], [0, 61]]) — i.e. it degenerates to the "always Up" rule.
-Part (g) — *KNN, $K = 1$:* 51/104 = *49.04%* — worse than the 55.6% "always Up" baseline (50.0%) as well; with a noisy single predictor and $K = 1$ the decision follows the nearest neighbor's realized direction essentially at random.
-Part (h) — *naive Bayes:* 61/104 = *58.65%* — like QDA it also predicts Up for every held-out week, since both classes' (normal) marginal densities for `Lag2` are quite similar and the priors favor Up.
+Part (e) — *LDA:* identical to logistic regression here, 65/104 = *62.5%* — with a single predictor both reduce to a single threshold, and on this split they select the same one; the confusion matrix is exactly the same.
+Part (f) — *QDA:* 61/104 = *58.65%*; the fitted quadratic `Lag2` boundary has no real roots (discriminant $approx -3.1 times 10^(-3)$; complex roots $approx -2.71 plus.minus 2.70 i$), so it predicts Up for *all 104* test weeks (matrix [[0, 43], [0, 61]]) — i.e. it degenerates to the "always Up" rule.
+Part (g) — *KNN, $K = 1$:* 51/104 = *49.04%* — well below the 58.7% always-Up baseline on these 104 weeks (61/104), and essentially chance; with a noisy single predictor and $K = 1$ the decision follows the nearest neighbor's realized direction essentially at random.
+Part (h) — *naive Bayes:* 61/104 = *58.65%* — with one predictor it fits essentially the same one-dimensional quadratic boundary as QDA and likewise predicts Up for every held-out week.
 
 === (i) Best method on the held-out data
 
@@ -281,7 +281,7 @@ Logistic regression and LDA are the best, tying at *62.5%* (65/104): both predic
 
 === (j) Predictor combinations, transformations, interactions, and K
 
-I re-fit every method on combinations of predictors and transformations on the same 1990–2008 train / 2009–2010 test split: 15 predictor sets (including `Lag2^2`, `Lag1^2`, the interaction `Lag1*Lag2`, and `log(Volume)`) cross-fitted with the four regression-type methods plus KNN over $K in {1, 2, 3, 5, 7, 9, 10, 11, 12, 13, 14, 15, 17, 20, 25, 30, 50}$ — 315 fits in total. Test accuracies are tabulated below; for KNN, the reported entry is its best accuracy over the values of $K$ tried (the winning $K$ is shown in the last column).
+I re-fit every method on combinations of predictors and transformations on the same 1990–2008 train / 2009–2010 test split: 15 predictor sets (including `Lag2^2`, `Lag1^2`, the interaction `Lag1*Lag2`, and `log(Volume)`) cross-fitted with the four regression-type methods plus KNN over $K in {1, 2, 3, 5, 7, 9, 10, 11, 12, 13, 14, 15, 17, 20, 25, 30, 47, 50}$ — 330 fits in total. Test accuracies are tabulated below; for KNN, the reported entry is its best accuracy over the values of $K$ tried (the winning $K$ is shown in the last column).
 #let rk = data.at("q13j_rank_table")
 #let rkrows = rk.enumerate().map(((i, r)) => {
   let f = if i == 0 { r => table.cell(fill: rgb(233, 241, 229))[#r] } else { r => [#r] }
@@ -324,7 +324,7 @@ Entries are test-set accuracy (fraction correct on 104 weeks). The overall best 
   caption: [`Lag2`-only KNN test accuracy as a function of $K$. Accuracy is erratic ($K = 1$: 49.0%), stabilizes within 55–62% for most larger $K$, and the best single fit is $K = 47$ (61.5%); $K = 20$ gives 59.6%.],
 ) <fig-q13-knn>
 
-*Interpretation.* Including quadratic terms in `Lag1` and `Lag2` and using QDA pushes the held-out accuracy to 64.4%; several simpler alternatives (logistic or LDA on `Lag2` or `Lag2`+`Lag2^2`; `Lag1`+`Lag2` with KNN at $K = 25$) sit at 62.5%. However, this comparison has strong selection bias: 315 models were fitted and evaluated on the same 104 held-out weeks, so the winner's edge (64.4% vs. 62.5%, i.e. two extra correct weeks) may largely reflect chance, and the single predictor `Lag2` with plain logistic regression or LDA remains the most defensible choice.
+*Interpretation.* Including quadratic terms in `Lag1` and `Lag2` and using QDA pushes the held-out accuracy to 64.4%; several simpler alternatives sit at 62.5% — logistic or LDA on `Lag2`, logistic or LDA on `Lag2`+`Lag3`, logistic or QDA on `Lag2`+`Lag2^2`, and `Lag1`+`Lag2` with KNN at $K = 25$ (LDA on `Lag2`+`Lag2^2` is a notch lower at 61.5%). However, this comparison has strong selection bias: 330 models were fitted and evaluated on the same 104 held-out weeks, so the winner's edge (64.4% vs. 62.5%, i.e. two extra correct weeks) may largely reflect chance, and the single predictor `Lag2` with plain logistic regression or LDA remains the most defensible choice.
 
 // =====================================================================
 // ============== PROBLEM 15 ==============

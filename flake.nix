@@ -103,6 +103,7 @@
             ])
             ++ [
               pkgs.pandoc
+              pkgs.typst
               latex
               islp
               self.formatter.${system}
