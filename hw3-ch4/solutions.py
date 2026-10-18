@@ -131,6 +131,15 @@ RESULTS["q3"] = {
     "c_quad_full": float(_c_full),
 }
 
+# Verify that delta_1 - delta_2 actually vanishes at the roots (machine precision).
+_resid = [
+    abs(float(delta(r, MU1, S1SQ, np.log(0.5)) - delta(r, MU2, S2SQ, np.log(0.5))))
+    for r in uneq_roots
+]
+RESULTS["q3"]["boundary_residuals"] = _resid
+print(f"Q3: max |delta_1 - delta_2| at boundary roots = {max(_resid):.2e}")
+assert max(_resid) < 1e-12, "boundary roots do not solve delta_1 = delta_2"
+
 fig, axes = plt.subplots(1, 2, figsize=(9.6, 3.6))
 
 # --- Panel A: equal variances -> linear boundary ---------------------
@@ -389,7 +398,7 @@ sets: list[list[str]] = [
     ["Lag1", "Lag2", "Lag3", "Lag4", "Lag5", "Volume", "Lag1Lag2"],
 ]
 METHODS = ["Logit", "LDA", "QDA", "NB"]
-KNNS = [1, 2, 3, 5, 7, 9, 10, 11, 12, 13, 14, 15, 17, 20, 25, 30, 50]
+KNNS = [1, 2, 3, 5, 7, 9, 10, 11, 12, 13, 14, 15, 17, 20, 25, 30, 47, 50]
 
 exp_rows: list[dict] = []
 for s in sets:
@@ -496,6 +505,11 @@ RESULTS["q15"] = {
 print("(b) Power2(3, 8) output:")
 Power2(3, 8)
 RESULTS["q15"]["Power2_3_8"] = int(3**8)
+
+print("(c) Power2 outputs:")
+Power2(10, 3)
+Power2(8, 17)
+Power2(131, 3)
 
 # (e) plot f(x) = x^2 on 1..10, linear + log-log panels
 x10 = np.arange(1, 11)
